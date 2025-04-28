@@ -1,0 +1,140 @@
+<MainScreen>
+    md_bg_color: app.theme_cls.backgroundColor
+
+    MDBoxLayout:
+        orientation: "vertical"
+        size_hint: None, 1
+        width: "600dp"
+#        theme_line_color: "Custom"
+#        line_color: "grey"
+        spacing: "20dp"
+        padding: 0, "20dp"
+        pos_hint: {"center_x": 0.5}
+
+        MDLabel:
+            text: "Processing Benchmark Tool"
+            font_style: "Headline"
+            adaptive_size: True
+            pos_hint: {"center_x": 0.5}
+            bold: True
+
+        MDLabel:
+            text: "Compare Serial Vs Parallel Processing Performance"
+            font_style: "Title"
+            adaptive_size: True
+            pos_hint: {"center_x": 0.5}
+
+        MDLabel:
+            size_hint: None, None
+            height: "30dp"
+
+
+        MDBoxLayout:
+            size_hint: 1, None
+            adaptive_height: True
+            radius: "16dp"
+            md_bg_color: "#EFEFEF"
+
+            MDBoxLayout:
+                padding: "20dp"
+                orientation: "vertical"
+                spacing: "20dp"
+                adaptive_height: True
+
+                MDLabel:
+                    text: "Serial Processing"
+                    font_style: "Title"
+                    adaptive_size: True
+
+
+                MDButton:
+                    theme_bg_color: "Custom"
+                    md_bg_color: "#3B82F6"
+                    radius: "5dp"
+
+                    MDButtonText:
+                        text: "Start Serial Processing"
+                        theme_text_color: "Custom"
+                        text_color: "white"
+
+
+                ProcessingProgressBar:
+                    values: [0]
+                    indicator_color: "#3B82F6"
+
+                TimeIndicator:
+
+        MDBoxLayout:
+            size_hint: 1, None
+            adaptive_height: True
+            radius: "16dp"
+            md_bg_color: "#EFEFEF"
+
+            MDBoxLayout:
+                padding: "20dp"
+                orientation: "vertical"
+                spacing: "20dp"
+                adaptive_height: True
+
+                MDLabel:
+                    text: "Parallel Processing"
+                    font_style: "Title"
+                    adaptive_size: True
+
+
+                MDButton:
+                    theme_bg_color: "Custom"
+                    md_bg_color: "#10B981"
+                    radius: "5dp"
+
+                    MDButtonText:
+                        text: "Start Parallel Processing"
+                        theme_text_color: "Custom"
+                        text_color: "white"
+
+
+                ProcessingProgressBar:
+                    values: [0, 0, 0, 0]
+                    indicator_color: "#10B981"
+
+                TimeIndicator:
+
+        MDLabel:
+
+
+<SingleProgressBar>
+    size_hint: 1, None
+    height: "20dp"
+    radius: "5dp"
+    md_bg_color: "black"
+    indicator_color: self.parent.indicator_color if (self.parent and self.parent.indicator_color) else self.indicator_color
+
+    MDLinearProgressIndicator:
+        value: root.value
+        indicator_color: root.indicator_color
+        radius: root.radius
+        size_hint: 1, None
+        height: self.parent.height
+
+
+<ProcessingProgressBar>
+    orientation: "horizontal"
+    adaptive_height: True
+    spacing: "5dp"
+
+
+<TimeIndicator>
+    orientation: "horizontal"
+    adaptive_height: True
+
+    MDLabel:
+        adaptive_height: True
+        text: f"Time elapsed: {root.time_elapsed:.2f}s"
+
+    MDLabel:
+        adaptive_size: True
+        text: "Processing time: " + (f"{root.processing_time:.2f}s" if root.processing_time > 0 else "- -")
+
+
+<CustomCard>
+
