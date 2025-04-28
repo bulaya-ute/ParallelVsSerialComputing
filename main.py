@@ -15,6 +15,16 @@ from kivymd.uix.progressindicator import MDLinearProgressIndicator
 from kivymd.uix.screen import MDScreen
 
 
+inputs = []  # Populate this list with the inputs you want to process
+
+
+def processor(_input: float | int):
+    """
+    Implement this and delete this docstring when done
+    It should return a float or int, after performing an operation on the input value
+    """
+
+
 class App(MDApp):
     DEBUG = True
     AUTORELOADER_PATHS = [
@@ -28,6 +38,12 @@ class App(MDApp):
     def build_app(self, first=False):
         return MainScreen()
 
+    def start_serial_processing(self):
+        """Implement this and delete this docstring when done"""
+
+    def start_parallel_processing(self):
+        """Implement this and delete this docstring when done"""
+
 
 class MainScreen(MDScreen):
     pass
@@ -39,7 +55,7 @@ class SingleProgressBar(MDBoxLayout):
 
 
 class ProcessingProgressBar(MDBoxLayout):
-    values = ListProperty([])
+    values = ListProperty([0])
     indicator_color = ColorProperty([1, 0, 1, 1])
     indicator_bg_color = ColorProperty([1, 0, 0, 1])
 

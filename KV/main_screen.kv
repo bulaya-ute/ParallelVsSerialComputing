@@ -5,8 +5,6 @@
         orientation: "vertical"
         size_hint: None, 1
         width: "600dp"
-#        theme_line_color: "Custom"
-#        line_color: "grey"
         spacing: "20dp"
         padding: 0, "20dp"
         pos_hint: {"center_x": 0.5}
@@ -59,7 +57,7 @@
 
 
                 ProcessingProgressBar:
-                    values: [0]
+                    values: [50]
                     indicator_color: "#3B82F6"
 
                 TimeIndicator:
@@ -81,6 +79,26 @@
                     font_style: "Title"
                     adaptive_size: True
 
+                MDBoxLayout:
+                    adaptive_height: True
+#                    md_bg_color: "blue"
+
+                    MDLabel:
+                        adaptive_size: True
+                        text: "Number of parallel processes: "
+                        pos_hint: {"center_y": 0.5}
+
+                    MDTextField:
+                        id: num_processes_textfield
+                        size_hint: None, None
+                        width: "100dp"
+#                        mode: "filled"
+                        line_color_focus: [0, 0, 0, 0]
+                        line_color_normal: [0, 0, 0, 0]
+                        text: "2"
+
+
+
 
                 MDButton:
                     theme_bg_color: "Custom"
@@ -93,8 +111,10 @@
                         text_color: "white"
 
 
+
                 ProcessingProgressBar:
-                    values: [0, 0, 0, 0]
+                    id: parallel_progress_bar
+                    values: [0] * (int(num_processes_textfield.text) if num_processes_textfield.text.isnumeric() and int(num_processes_textfield.text) != 0 else len(self.values))
                     indicator_color: "#10B981"
 
                 TimeIndicator:
