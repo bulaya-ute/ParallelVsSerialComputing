@@ -4,7 +4,7 @@
     MDBoxLayout:
         orientation: "vertical"
         size_hint: None, 1
-        width: "600dp"
+        width: "800dp"
         spacing: "20dp"
         padding: 0, "20dp"
         pos_hint: {"center_x": 0.5}
@@ -46,6 +46,8 @@
 
 
                 MDButton:
+                    id: serial_processing_button
+                    on_release: app.start_serial_processing()
                     theme_bg_color: "Custom"
                     md_bg_color: "#3B82F6"
                     radius: "5dp"
@@ -57,7 +59,7 @@
 
 
                 ProcessingProgressBar:
-                    values: [50]
+                    values: [0.00001]
                     indicator_color: "#3B82F6"
 
                 TimeIndicator:
@@ -101,9 +103,11 @@
 
 
                 MDButton:
+                    id: parallel_processing_button
                     theme_bg_color: "Custom"
                     md_bg_color: "#10B981"
                     radius: "5dp"
+                    on_release: app.start_parallel_processing()
 
                     MDButtonText:
                         text: "Start Parallel Processing"

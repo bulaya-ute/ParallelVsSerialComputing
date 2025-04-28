@@ -59,7 +59,7 @@ class ProcessingProgressBar(MDBoxLayout):
     indicator_color = ColorProperty([1, 0, 1, 1])
     indicator_bg_color = ColorProperty([1, 0, 0, 1])
 
-    def on_values(self, instance, values):
+    def on_values(self, *args):
         values = self.values
 
         # Ensure the correct number of progress bars are present.
