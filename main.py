@@ -133,11 +133,13 @@ class MainScreen(MDScreen):
 
     def start_parallel_processing(self):
         """Execute parallel processing on all inputs using multiprocessing"""
+        from multiprocessing import Manager, Process
+
         # Get references to UI elements
         progress_bar = self.ids.parallel_progress_bar
         time_indicator = self.ids.parallel_processing_button.parent.children[0]
 
-        # Get the number of processes
+        # Get number of processes
         try:
             num_processes = int(self.ids.num_processes_textfield.text)
             if num_processes <= 0:
@@ -155,6 +157,13 @@ class MainScreen(MDScreen):
         time_indicator.time_elapsed = 0
         time_indicator.processing_time = 0
 
+        # Create manager as a class attribute to keep it alive
+        self._manager = Manager()
+        
+        # Create shared lists for progress and completion status
+        shared_progress = self._manager.list([0] * num_processes)
+        shared_completed = self._manager.list([False] * num_processes)
+
         # Prepare the work distribution
         chunk_size = len(inputs) // num_processes
         chunks = []
@@ -164,35 +173,36 @@ class MainScreen(MDScreen):
             end_idx = start_idx + chunk_size if i < num_processes - 1 else len(inputs)
             chunks.append((start_idx, end_idx))
 
-        # Create queues for communication with processes
-        result_queues = [Queue() for _ in range(num_processes)]
-
         # Define worker function for each process
-        def worker_process(process_index, chunk_indices, result_queue):
-            _start_idx, _end_idx = chunk_indices
-            total_items = _end_idx - _start_idx
+        def worker_process(process_id, chunk_indices, shared_progress, shared_completed):
+            start_idx, end_idx = chunk_indices
+            total_items = end_idx - start_idx
 
-            for i, idx in enumerate(range(_start_idx, _end_idx)):
-                result = processor(inputs[idx])
-                # Report progress: (process_id, progress_percentage)
-                progress = ((i + 1) / total_items) * 100
-                result_queue.put(progress)
-                progress_bar.values[process_index] = progress
+            try:
+                for i, idx in enumerate(range(start_idx, end_idx)):
+                    result = processor(inputs[idx])
+                    # Update shared progress directly (0-1 range)
+                    progress = (i + 1) / total_items
+                    shared_progress[process_id] = progress
 
-            print(f"{process_index} Done processing chunk {_start_idx} to {_end_idx}")
-
+                print(f"{process_id} Done processing chunk {start_idx} to {end_idx}")
+            except Exception as e:
+                print(f"Error in process {process_id}: {e}")
+            finally:
+                # Mark this process as complete when done
+                shared_completed[process_id] = True
 
         # Start processes
         processes = []
         start_time = time.time()
 
         for i in range(num_processes):
-            p = Process(target=worker_process, args=(i, chunks[i], result_queues[i]))
+            p = Process(
+                target=worker_process,
+                args=(i, chunks[i], shared_progress, shared_completed)
+            )
             processes.append(p)
             p.start()
-
-        # Track completed processes
-        completed_processes = [False] * num_processes
 
         # Monitor process progress and update UI
         def update_progress(dt):
@@ -201,45 +211,51 @@ class MainScreen(MDScreen):
             elapsed = current_time - start_time
             time_indicator.time_elapsed = elapsed
 
-            print(completed_processes)
+            try:
+                # Update UI progress bars from shared memory
+                progress_values = []
+                for i in range(num_processes):
+                    # Get current progress from shared memory
+                    progress = shared_progress[i]
 
-            # Check each process queue for progress updates
-            for i in range(num_processes):
-                if completed_processes[i]:
-                    continue
+                    # If process completed, ensure progress shows 100%
+                    if shared_completed[i] and progress < 0.99:
+                        progress = 1.0
 
-                # Get all available progress updates from this process
-                while not result_queues[i].empty():
-                    progress = result_queues[i].get()
-                    progress_bar.values[i] = progress
+                    progress_values.append(progress * 100)  # Convert to 0-100 scale for UI
 
-                # Check if process is still alive
-                if not processes[i].is_alive() and progress_bar.values[i] >= 0.99:
-                    completed_processes[i] = True
-                    progress_bar.values[i] = 1.0
+                # Update progress bar all at once to avoid visual artifacts
+                progress_bar.values = progress_values
 
-            # If all processes are complete
-            if all(completed_processes):
-                # Processing complete
-                end_time = time.time()
-                time_indicator.processing_time = end_time - start_time
+                # If all processes are complete
+                if all(shared_completed):
+                    # Processing complete
+                    end_time = time.time()
+                    time_indicator.processing_time = end_time - start_time
 
-                # Clean up processes
-                for p in processes:
-                    if p.is_alive():
-                        p.join(0.1)
+                    # Clean up processes
+                    for p in processes:
+                        if p.is_alive():
+                            p.join(0.1)
 
-                # Re-enable buttons
-                self.ids.serial_processing_button.disabled = False
-                self.ids.parallel_processing_button.disabled = False
+                    # Re-enable buttons
+                    self.ids.serial_processing_button.disabled = False
+                    self.ids.parallel_processing_button.disabled = False
 
-                return False  # Stop the clock schedule
+                    # Clean up manager
+                    self._manager.shutdown()
+                    del self._manager
+
+                    return False  # Stop the clock schedule
+
+            except (AttributeError, EOFError):
+                # Handle case where manager connection is lost
+                return False
 
             return True  # Continue the clock schedule
 
         # Schedule the update function to run periodically
-        Clock.schedule_interval(update_progress, 0.01)
-        print()
+        Clock.schedule_interval(update_progress, 0.05)  # Update 20 times/second
 
 
 class SingleProgressBar(MDBoxLayout):
