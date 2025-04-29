@@ -5,7 +5,7 @@ import math
 from kivy.clock import Clock
 from kivy.metrics import dp
 from kivy.properties import ListProperty, BooleanProperty, VariableListProperty, ColorProperty, OptionProperty, \
-    NumericProperty
+    NumericProperty, StringProperty
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.theming import ThemableBehavior
@@ -340,6 +340,14 @@ class TimeIndicator(MDBoxLayout):
     time_elapsed = NumericProperty(0.0)
     processing_time = NumericProperty(0.0)
 
+
+class PerformanceResult(MDBoxLayout):
+    metric_name = StringProperty()
+    metric_value = NumericProperty()
+    metric_unit = StringProperty()
+    icon = StringProperty()
+    icon_color = ColorProperty([1, 0, 1, 1])
+    metric_description = StringProperty()
 
 if __name__ == "__main__":
     App().run()

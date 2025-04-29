@@ -143,6 +143,69 @@
                 TimeIndicator:
                     id: parallel_time_indicator
 
+        MDLabel:
+            text: "Performance Results"
+            font_style: "Title"
+            adaptive_size: True
+
+        MDBoxLayout:
+            orientation: "horizontal"
+            spacing: "20dp"
+            adaptive_height: True
+
+            PerformanceResult:
+                id: speedup_metric
+                metric_name: "Speedup (S)"
+                metric_unit: "x"
+                icon: "speedometer"
+                icon_color: "#4285F4"
+                metric_description: "S = Tserial/Tparallel"
+                metric_value: (serial_time_indicator.processing_time / parallel_time_indicator.processing_time ) if (serial_time_indicator.processing_time and parallel_time_indicator.processing_time) else 0
+
+            PerformanceResult:
+                metric_name: "Efficiency (E)"
+                metric_unit: "%"
+                icon: "leaf"
+                icon_color: "#34A853"
+                metric_description: "E = (S/Parallel processors) x 100%"
+                metric_value: (speedup_metric.metric_value / parallel_progress_bar.num_processes) * 100
+
+
+
+
+
+<PerformanceResult>
+    orientation: "vertical"
+    padding: "20dp"
+    spacing: "20dp"
+    adaptive_height: True
+    line_color: "grey"
+    radius: "16dp"
+
+    MDBoxLayout:
+        orientation: "horizontal"
+        adaptive_height: True
+        spacing: "10dp"
+
+        MDIcon:
+            icon: root.icon
+            icon_color: root.icon_color
+
+        MDLabel:
+            adaptive_height: True
+            text: f"{root.metric_name}"
+
+    MDLabel:
+        adaptive_height: True
+        text: (f"{(root.metric_value):.2f}" if root.metric_value != 0 else "0.00") + f"{root.metric_unit}"
+        font_style: "Headline"
+
+    MDLabel:
+        adaptive_height: True
+        theme_text_color: "Custom"
+        text_color: "grey"
+        text: root.metric_description
+
 
 
 <SingleProgressBar>
