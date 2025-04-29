@@ -1,131 +1,136 @@
 <MainScreen>
     md_bg_color: app.theme_cls.backgroundColor
-
-    MDBoxLayout:
-        orientation: "vertical"
-        size_hint: None, 1
-        width: "600dp"
-        spacing: "20dp"
-        padding: 0, "20dp"
-        pos_hint: {"center_x": 0.5}
-
-        MDLabel:
-            text: "Processing Benchmark Tool"
-            font_style: "Headline"
-            adaptive_size: True
-            pos_hint: {"center_x": 0.5}
-            bold: True
-
-        MDLabel:
-            text: "Compare Serial Vs Parallel Processing Performance"
-            font_style: "Title"
-            adaptive_size: True
-            pos_hint: {"center_x": 0.5}
-
-        MDLabel:
-            size_hint: None, None
-            height: "30dp"
-
+#    MDBoxLayout:
+#        adaptive_width: True
+#        pos_hint: {"center_x": 0.5}
+    MDScrollView:
+        do_scroll_x: False
 
         MDBoxLayout:
-            size_hint: 1, None
+            orientation: "vertical"
+            size_hint: None, 1
+            width: "600dp"
+            spacing: "20dp"
+            padding: 0, "20dp"
+            pos_hint: {"center_x": 0.5, "top": 1}
             adaptive_height: True
-            radius: "16dp"
-            md_bg_color: "#EFEFEF"
+
+            MDLabel:
+                text: "Processing Benchmark Tool"
+                font_style: "Headline"
+                adaptive_size: True
+                pos_hint: {"center_x": 0.5}
+                bold: True
+
+            MDLabel:
+                text: "Compare Serial Vs Parallel Processing Performance"
+                font_style: "Title"
+                adaptive_size: True
+                pos_hint: {"center_x": 0.5}
+
+            MDLabel:
+                size_hint: None, None
+                height: "30dp"
+
 
             MDBoxLayout:
-                padding: "20dp"
-                orientation: "vertical"
-                spacing: "20dp"
+                size_hint: 1, None
                 adaptive_height: True
-
-                MDLabel:
-                    text: "Serial Processing"
-                    font_style: "Title"
-                    adaptive_size: True
-
-
-                MDButton:
-                    id: serial_processing_button
-                    on_release: root.start_serial_processing()
-                    theme_bg_color: "Custom"
-                    md_bg_color: "#3B82F6"
-                    radius: "5dp"
-
-                    MDButtonText:
-                        text: "Start Serial Processing"
-                        theme_text_color: "Custom"
-                        text_color: "white"
-
-
-                ProcessingProgressBar:
-                    id: serial_progress_bar
-                    values: [0.00001]
-                    indicator_color: "#3B82F6"
-
-                TimeIndicator:
-                    id: serial_time_indicator
-
-        MDBoxLayout:
-            size_hint: 1, None
-            adaptive_height: True
-            radius: "16dp"
-            md_bg_color: "#EFEFEF"
-
-            MDBoxLayout:
-                padding: "20dp"
-                orientation: "vertical"
-                spacing: "20dp"
-                adaptive_height: True
-
-                MDLabel:
-                    text: "Parallel Processing"
-                    font_style: "Title"
-                    adaptive_size: True
+                radius: "16dp"
+                md_bg_color: "#EFEFEF"
 
                 MDBoxLayout:
+                    padding: "20dp"
+                    orientation: "vertical"
+                    spacing: "20dp"
                     adaptive_height: True
-#                    md_bg_color: "blue"
 
                     MDLabel:
+                        text: "Serial Processing"
+                        font_style: "Title"
                         adaptive_size: True
-                        text: "Number of parallel processes: "
-                        pos_hint: {"center_y": 0.5}
-
-                    MDTextField:
-                        id: num_processes_textfield
-                        size_hint: None, None
-                        width: "100dp"
-#                        mode: "filled"
-                        line_color_focus: [0, 0, 0, 0]
-                        line_color_normal: [0, 0, 0, 0]
-                        text: "2"
 
 
+                    MDButton:
+                        id: serial_processing_button
+                        on_release: root.start_serial_processing()
+                        theme_bg_color: "Custom"
+                        md_bg_color: "#3B82F6"
+                        radius: "5dp"
+
+                        MDButtonText:
+                            text: "Start Serial Processing"
+                            theme_text_color: "Custom"
+                            text_color: "white"
 
 
-                MDButton:
-                    id: parallel_processing_button
-                    theme_bg_color: "Custom"
-                    md_bg_color: "#10B981"
-                    radius: "5dp"
-                    on_release: root.start_parallel_processing()
+                    ProcessingProgressBar:
+                        id: serial_progress_bar
+                        values: [0.00001]
+                        indicator_color: "#3B82F6"
 
-                    MDButtonText:
-                        text: "Start Parallel Processing"
-                        theme_text_color: "Custom"
-                        text_color: "white"
+                    TimeIndicator:
+                        id: serial_time_indicator
+
+            MDBoxLayout:
+                size_hint: 1, None
+                adaptive_height: True
+                radius: "16dp"
+                md_bg_color: "#EFEFEF"
+
+                MDBoxLayout:
+                    padding: "20dp"
+                    orientation: "vertical"
+                    spacing: "20dp"
+                    adaptive_height: True
+
+                    MDLabel:
+                        text: "Parallel Processing"
+                        font_style: "Title"
+                        adaptive_size: True
+
+                    MDBoxLayout:
+                        adaptive_height: True
+    #                    md_bg_color: "blue"
+
+                        MDLabel:
+                            adaptive_size: True
+                            text: "Number of parallel processes: "
+                            pos_hint: {"center_y": 0.5}
+
+                        MDTextField:
+                            id: num_processes_textfield
+                            size_hint: None, None
+                            width: "100dp"
+    #                        mode: "filled"
+                            line_color_focus: [0, 0, 0, 0]
+                            line_color_normal: [0, 0, 0, 0]
+                            text: "2"
 
 
 
-                ProcessingProgressBar:
-                    id: parallel_progress_bar
-#                    values: [0] * (int(num_processes_textfield.text) if num_processes_textfield.text.isnumeric() and int(num_processes_textfield.text) != 0 else len(self.values))
-                    indicator_color: "#10B981"
 
-                TimeIndicator:
+                    MDButton:
+                        id: parallel_processing_button
+                        theme_bg_color: "Custom"
+                        md_bg_color: "#10B981"
+                        radius: "5dp"
+                        on_release: root.start_parallel_processing()
 
-        MDLabel:
+                        MDButtonText:
+                            text: "Start Parallel Processing"
+                            theme_text_color: "Custom"
+                            text_color: "white"
+
+
+
+                    ProcessingProgressBar:
+                        id: parallel_progress_bar
+    #                    values: [0] * (int(num_processes_textfield.text) if num_processes_textfield.text.isnumeric() and int(num_processes_textfield.text) != 0 else len(self.values))
+                        indicator_color: "#10B981"
+
+                    TimeIndicator:
+
 
 
 <SingleProgressBar>
