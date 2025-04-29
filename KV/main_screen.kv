@@ -4,7 +4,7 @@
     MDBoxLayout:
         orientation: "vertical"
         size_hint: None, 1
-        width: "800dp"
+        width: "600dp"
         spacing: "20dp"
         padding: 0, "20dp"
         pos_hint: {"center_x": 0.5}
@@ -47,7 +47,7 @@
 
                 MDButton:
                     id: serial_processing_button
-                    on_release: app.start_serial_processing()
+                    on_release: root.start_serial_processing()
                     theme_bg_color: "Custom"
                     md_bg_color: "#3B82F6"
                     radius: "5dp"
@@ -59,10 +59,12 @@
 
 
                 ProcessingProgressBar:
+                    id: serial_progress_bar
                     values: [0.00001]
                     indicator_color: "#3B82F6"
 
                 TimeIndicator:
+                    id: serial_time_indicator
 
         MDBoxLayout:
             size_hint: 1, None
@@ -107,7 +109,7 @@
                     theme_bg_color: "Custom"
                     md_bg_color: "#10B981"
                     radius: "5dp"
-                    on_release: app.start_parallel_processing()
+                    on_release: root.start_parallel_processing()
 
                     MDButtonText:
                         text: "Start Parallel Processing"
@@ -160,5 +162,9 @@
         text: "Processing time: " + (f"{root.processing_time:.2f}s" if root.processing_time > 0 else "- -")
 
 
-<CustomCard>
+<CustomCard@MDCard>
+    elevation: 1
+    padding: "8dp"
+    radius: "8dp"
+    ripple_behavior: True
 

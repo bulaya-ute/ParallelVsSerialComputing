@@ -1,6 +1,10 @@
+import time
+import random
+from multiprocessing import Process, Queue
+import math
+from kivy.clock import Clock
 from kivy.metrics import dp
-from kivy.properties import ListProperty, BooleanProperty, VariableListProperty, ColorProperty, OptionProperty, Clock, \
-    NumericProperty
+from kivy.properties import ListProperty, BooleanProperty, VariableListProperty, ColorProperty, OptionProperty, NumericProperty
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.theming import ThemableBehavior
@@ -15,14 +19,24 @@ from kivymd.uix.progressindicator import MDLinearProgressIndicator
 from kivymd.uix.screen import MDScreen
 
 
-inputs = []  # Populate this list with the inputs you want to process
+# Generate 100 random inputs between 1 and 1000
+inputs = [random.randint(1, 1000) for _ in range(50)]
 
 
-def processor(_input: float | int):
+def processor(input_value: float | int):
     """
-    Implement this and delete this docstring when done
-    It should return a float or int, after performing an operation on the input value
+    Processor function that simulates complex calculation by:
+    1. Computing multiple mathematical operations
+    2. Introducing a small delay to simulate processing time
     """
+    # Simulate complex processing with a delay proportional to input value
+    delay = (input_value % 10) / 10  # 0.0 to 0.9 seconds
+    time.sleep(delay)
+    
+    # Perform some calculations
+    result = math.sqrt(input_value) + math.sin(input_value) * 10 + math.log(input_value + 1)
+    
+    return result
 
 
 class App(MDApp):
@@ -38,15 +52,165 @@ class App(MDApp):
     def build_app(self, first=False):
         return MainScreen()
 
-    def start_serial_processing(self):
-        """Implement this and delete this docstring when done"""
-
-    def start_parallel_processing(self):
-        """Implement this and delete this docstring when done"""
 
 
 class MainScreen(MDScreen):
-    pass
+    def start_serial_processing(self):
+        """Execute serial processing on all inputs"""
+        # Get references to UI elements
+        progress_bar = self.ids.serial_progress_bar
+        time_indicator = self.ids.serial_time_indicator
+        serial_start_button = self.ids.serial_processing_button
+        parallel_start_button = self.ids.parallel_processing_button
+
+        # Disable buttons while processing
+        serial_start_button.disabled = True
+        parallel_start_button.disabled = True
+
+        # Reset progress values
+        progress_bar.values = [0]
+        time_indicator.time_elapsed = 0
+        time_indicator.processing_time = 0
+
+        # Start processing in a separate "thread" to keep UI responsive
+        start_time = time.time()
+
+        def update_progress(dt):
+            # Calculate elapsed time
+            current_time = time.time()
+            elapsed = current_time - start_time
+            time_indicator.time_elapsed = elapsed
+
+            # Calculate what percentage should be complete by now
+            if idx[0] < len(inputs):
+                # Process next input
+                result = processor(inputs[idx[0]])
+                idx[0] += 1
+
+                # Update progress bar
+                progress_percentage = (idx[0] / len(inputs)) * 100
+                progress_bar.values = [progress_percentage]
+
+                return True  # Continue the clock schedule
+            else:
+                # Processing complete
+                end_time = time.time()
+                time_indicator.processing_time = end_time - start_time
+
+                # Re-enable buttons
+                serial_start_button.disabled = False
+                parallel_start_button.disabled = False
+
+                return False  # Stop the clock schedule
+
+        # Index to keep track of current position in the inputs list
+        idx = [0]
+
+        # Schedule the update function to run periodically
+        Clock.schedule_interval(update_progress, 0.01)
+
+    def start_parallel_processing(self):
+        """Execute parallel processing on all inputs using multiprocessing"""
+        # Get references to UI elements
+        progress_bar = self.ids.parallel_progress_bar
+        time_indicator = self.ids.parallel_processing_button.parent.children[0]
+
+        # Get number of processes
+        try:
+            num_processes = int(self.ids.num_processes_textfield.text)
+            if num_processes <= 0:
+                num_processes = 2
+        except (ValueError, TypeError):
+            num_processes = 2
+            self.ids.num_processes_textfield.text = "2"
+
+        # Disable buttons while processing
+        self.ids.serial_processing_button.disabled = True
+        self.ids.parallel_processing_button.disabled = True
+
+        # Initialize progress values
+        progress_bar.values = [0] * num_processes
+        time_indicator.time_elapsed = 0
+        time_indicator.processing_time = 0
+
+        # Prepare the work distribution
+        chunk_size = len(inputs) // num_processes
+        chunks = []
+
+        for i in range(num_processes):
+            start_idx = i * chunk_size
+            end_idx = start_idx + chunk_size if i < num_processes - 1 else len(inputs)
+            chunks.append((start_idx, end_idx))
+
+        # Create queues for communication with processes
+        result_queues = [Queue() for _ in range(num_processes)]
+
+        # Define worker function for each process
+        def worker_process(chunk_indices, result_queue):
+            start_idx, end_idx = chunk_indices
+            total_items = end_idx - start_idx
+
+            for i, idx in enumerate(range(start_idx, end_idx)):
+                result = processor(inputs[idx])
+                # Report progress: (process_id, progress_percentage)
+                progress = (i + 1) / total_items
+                result_queue.put(progress)
+
+        # Start processes
+        processes = []
+        start_time = time.time()
+
+        for i in range(num_processes):
+            p = Process(target=worker_process, args=(chunks[i], result_queues[i]))
+            processes.append(p)
+            p.start()
+
+        # Track completed processes
+        completed_processes = [False] * num_processes
+
+        # Monitor process progress and update UI
+        def update_progress(dt):
+            # Update elapsed time
+            current_time = time.time()
+            elapsed = current_time - start_time
+            time_indicator.time_elapsed = elapsed
+
+            # Check each process queue for progress updates
+            for i in range(num_processes):
+                if completed_processes[i]:
+                    continue
+
+                # Get all available progress updates from this process
+                while not result_queues[i].empty():
+                    progress = result_queues[i].get()
+                    progress_bar.values[i] = progress
+
+                # Check if process is still alive
+                if not processes[i].is_alive() and progress_bar.values[i] >= 0.99:
+                    completed_processes[i] = True
+                    progress_bar.values[i] = 1.0
+
+            # If all processes are complete
+            if all(completed_processes):
+                # Processing complete
+                end_time = time.time()
+                time_indicator.processing_time = end_time - start_time
+
+                # Clean up processes
+                for p in processes:
+                    if p.is_alive():
+                        p.join(0.1)
+
+                # Re-enable buttons
+                self.ids.serial_processing_button.disabled = False
+                self.ids.parallel_processing_button.disabled = False
+
+                return False  # Stop the clock schedule
+
+            return True  # Continue the clock schedule
+
+        # Schedule the update function to run periodically
+        Clock.schedule_interval(update_progress, 0.01)
 
 
 class SingleProgressBar(MDBoxLayout):
