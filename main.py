@@ -308,21 +308,28 @@ class SingleProgressBar(MDBoxLayout):
 
 
 class ProcessingProgressBar(MDBoxLayout):
-    values = ListProperty([0])
+    num_processes = NumericProperty(9)
+    values = ListProperty()
     indicator_color = ColorProperty([1, 0, 1, 1])
     indicator_bg_color = ColorProperty([1, 0, 0, 1])
 
-    def on_values(self, *args):
-        values = self.values
+    def on_num_processes(self, *args):
 
+        while len(self.values) != self.num_processes:
+            if len(self.values) > self.num_processes:
+                self.values.pop(0)
+            elif len(self.values) < self.num_processes:
+                self.values.append(0)
+
+
+    def on_values(self, *args):
         # Ensure the correct number of progress bars are present.
-        while len(self.children) != len(values):
-            if len(self.children) < len(values):
+        while len(self.children) != len(self.values):
+            # print(len(self.values), self.num_processes)
+            if len(self.children) < len(self.values):
                 self.add_widget(SingleProgressBar(
-                    # md_bg_color=[0, 0, 1, 1],
-                    # indicator_color=self.indicator_color,
                 ))
-            elif len(self.children) > len(values):
+            elif len(self.children) > len(self.values):
                 self.remove_widget(self.children[-1])
 
         for i, progress_bar in enumerate(self.children):

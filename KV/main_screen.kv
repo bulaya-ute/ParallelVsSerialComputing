@@ -46,10 +46,15 @@
                 spacing: "20dp"
                 adaptive_height: True
 
-                MDLabel:
-                    text: "Serial Processing"
-                    font_style: "Title"
-                    adaptive_size: True
+                MDBoxLayout:
+                    adaptive_height: True
+
+                    MDLabel:
+                        text: "Serial Processing"
+                        font_style: "Title"
+                        adaptive_size: True
+
+
 
 
                 MDButton:
@@ -67,9 +72,11 @@
                         text_color: "white"
 
 
+
+
                 ProcessingProgressBar:
                     id: serial_progress_bar
-#                    values: [0.00001]
+                    num_processes: 1
                     indicator_color: "#3B82F6"
 
                 TimeIndicator:
@@ -110,7 +117,7 @@
                         line_color_normal: [0, 0, 0, 0]
                         text: "2"
 
-
+                        on_text: parallel_progress_bar.num_processes = (int(self.text) if self.text.isnumeric() and int(num_processes_textfield.text) != 0 else len(parallel_progress_bar.values))
 
 
                 MDButton:
@@ -131,6 +138,7 @@
                     id: parallel_progress_bar
 #                    values: [0] * (int(num_processes_textfield.text) if num_processes_textfield.text.isnumeric() and int(num_processes_textfield.text) != 0 else len(self.values))
                     indicator_color: "#10B981"
+                    num_processes: (int(num_processes_textfield.text) if num_processes_textfield.text.isnumeric() and int(num_processes_textfield.text) >= 0 else self.num_processes)
 
                 TimeIndicator:
                     id: parallel_time_indicator
