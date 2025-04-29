@@ -20,22 +20,68 @@ from kivymd.uix.progressindicator import MDLinearProgressIndicator
 from kivymd.uix.screen import MDScreen
 
 # Generate 100 random inputs between 1 and 1000
-inputs = [random.randint(1, 1000) for _ in range(50)]
+inputs = [random.randint(1, 1000) for _ in range(5000)]
 
 
 def processor(input_value: float | int):
     """
-    Processor function that simulates complex calculation by:
-    1. Computing multiple mathematical operations
-    2. Introducing a small delay to simulate processing time
+    Processor function that performs CPU-intensive calculations:
+    1. Fibonacci sequence calculation
+    2. Prime number detection
+    3. Matrix operations with deterministic values
+    4. Complex mathematical computations
     """
-    # Simulate complex processing with a delay proportional to input value
-    delay = (input_value % 10) / 10  # 0.0 to 0.9 seconds
-    time.sleep(delay)
+    def calculate_fibonacci(n):
+        if n <= 1:
+            return n
+        return calculate_fibonacci(n-1) + calculate_fibonacci(n-2)
+    
+    def is_prime(n):
+        if n < 2:
+            return False
+        for i in range(2, int(math.sqrt(n)) + 1):
+            if n % i == 0:
+                return False
+        return True
+    
+    def matrix_multiply(size):
+        # Create two deterministic matrices based on input_value
+        matrix1 = [[((i + j) % 10) + 1 for j in range(size)] for i in range(size)]
+        matrix2 = [[(i * j % 10) + 1 for j in range(size)] for i in range(size)]
+        
+        # Multiply matrices
+        result = [[sum(a * b for a, b in zip(row, col)) 
+                  for col in zip(*matrix2)] 
+                  for row in matrix1]
+        return result
 
-    # Perform some calculations
-    result = math.sqrt(input_value) + math.sin(input_value) * 10 + math.log(input_value + 1)
-
+    # Perform multiple intensive calculations
+    result = 0
+    
+    # 1. Calculate Fibonacci sequence
+    fib_n = min(input_value % 20, 35)  # Limit to avoid excessive recursion
+    fib_result = calculate_fibonacci(fib_n)
+    
+    # 2. Find prime numbers up to input_value (limited to prevent excessive computation)
+    max_prime_check = min(input_value, 1000)
+    prime_count = sum(1 for num in range(2, max_prime_check) if is_prime(num))
+    
+    # 3. Perform matrix multiplication with deterministic values
+    matrix_size = min(int(math.sqrt(input_value)), 20)  # Limit matrix size
+    matrix_result = matrix_multiply(matrix_size)
+    matrix_sum = sum(sum(row) for row in matrix_result)
+    
+    # 4. Perform additional mathematical operations
+    complex_math = (math.cos(input_value) * 1000 + 
+                   math.tan(input_value % 1.5) * 100 +
+                   math.exp(input_value % 7))
+    
+    # Combine all results
+    result = (fib_result + 
+             prime_count + 
+             matrix_sum + 
+             complex_math)
+    
     return result
 
 
@@ -117,6 +163,7 @@ class MainScreen(MDScreen):
 
                 # Update progress (0-100 for KivyMD)
                 progress_percentage = ((i + 1) / len(inputs)) * 100
+                print(f"Progress: {progress_percentage}%")
                 progress_queue.put(progress_percentage)
 
             # Mark processing as complete
@@ -131,23 +178,10 @@ class MainScreen(MDScreen):
         # Schedule the UI update function to run periodically
         Clock.schedule_interval(update_ui, 0.05)  # Update UI 20 times per second
 
-    def start_parallel_processing(self):
+    def start_processing(self, progress_bar, time_indicator, num_processes):
         """Execute parallel processing on all inputs using multiprocessing"""
         from multiprocessing import Manager, Process
         from kivy.clock import mainthread  # Import mainthread decorator
-
-        # Get references to UI elements
-        progress_bar = self.ids.parallel_progress_bar
-        time_indicator = self.ids.parallel_processing_button.parent.children[0]
-
-        # Get number of processes
-        try:
-            num_processes = int(self.ids.num_processes_textfield.text)
-            if num_processes <= 0:
-                num_processes = 2
-        except (ValueError, TypeError):
-            num_processes = 2
-            self.ids.num_processes_textfield.text = "2"
 
         # Disable buttons while processing
         self.ids.serial_processing_button.disabled = True
