@@ -4,7 +4,8 @@ from multiprocessing import Process, Queue
 import math
 from kivy.clock import Clock
 from kivy.metrics import dp
-from kivy.properties import ListProperty, BooleanProperty, VariableListProperty, ColorProperty, OptionProperty, NumericProperty
+from kivy.properties import ListProperty, BooleanProperty, VariableListProperty, ColorProperty, OptionProperty, \
+    NumericProperty
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.theming import ThemableBehavior
@@ -17,7 +18,6 @@ from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.card import MDCard
 from kivymd.uix.progressindicator import MDLinearProgressIndicator
 from kivymd.uix.screen import MDScreen
-
 
 # Generate 100 random inputs between 1 and 1000
 inputs = [random.randint(1, 1000) for _ in range(50)]
@@ -32,10 +32,10 @@ def processor(input_value: float | int):
     # Simulate complex processing with a delay proportional to input value
     delay = (input_value % 10) / 10  # 0.0 to 0.9 seconds
     time.sleep(delay)
-    
+
     # Perform some calculations
     result = math.sqrt(input_value) + math.sin(input_value) * 10 + math.log(input_value + 1)
-    
+
     return result
 
 
@@ -53,10 +53,12 @@ class App(MDApp):
         return MainScreen()
 
 
-
 class MainScreen(MDScreen):
     def start_serial_processing(self):
         """Execute serial processing on all inputs"""
+        import threading
+        from queue import Queue
+
         # Get references to UI elements
         progress_bar = self.ids.serial_progress_bar
         time_indicator = self.ids.serial_time_indicator
@@ -72,29 +74,30 @@ class MainScreen(MDScreen):
         time_indicator.time_elapsed = 0
         time_indicator.processing_time = 0
 
-        # Start processing in a separate "thread" to keep UI responsive
+        # Create a queue for communication between the processing thread and UI updater
+        progress_queue = Queue()
+        processing_done = [False]  # Use a list for mutable reference
+        processing_end_time = [0]  # To store when processing is complete
+
+        # Start the timer for tracking elapsed time
         start_time = time.time()
 
-        def update_progress(dt):
-            # Calculate elapsed time
+        # This function will update the UI and runs in the main thread
+        def update_ui(dt):
+            # Update elapsed time
             current_time = time.time()
             elapsed = current_time - start_time
             time_indicator.time_elapsed = elapsed
 
-            # Calculate what percentage should be complete by now
-            if idx[0] < len(inputs):
-                # Process next input
-                result = processor(inputs[idx[0]])
-                idx[0] += 1
-
-                # Update progress bar
-                progress_percentage = (idx[0] / len(inputs)) * 100
+            # Check if we need to update the progress percentage
+            if not progress_queue.empty():
+                progress_percentage = progress_queue.get()
                 progress_bar.values = [progress_percentage]
 
-                return True  # Continue the clock schedule
-            else:
+            # Check if processing is complete
+            if processing_done[0]:
                 # Processing complete
-                end_time = time.time()
+                end_time = processing_end_time[0]
                 time_indicator.processing_time = end_time - start_time
 
                 # Re-enable buttons
@@ -103,11 +106,30 @@ class MainScreen(MDScreen):
 
                 return False  # Stop the clock schedule
 
-        # Index to keep track of current position in the inputs list
-        idx = [0]
+            return True  # Continue the clock schedule
 
-        # Schedule the update function to run periodically
-        Clock.schedule_interval(update_progress, 0.01)
+        # Define the worker function that will run in a separate thread
+        def processing_worker():
+            processing_start = time.time()
+            for i, input_val in enumerate(inputs):
+                # Process this input
+                result = processor(input_val)
+
+                # Update progress (0-100 for KivyMD)
+                progress_percentage = ((i + 1) / len(inputs)) * 100
+                progress_queue.put(progress_percentage)
+
+            # Mark processing as complete
+            processing_done[0] = True
+            processing_end_time[0] = time.time()
+
+        # Start the processing in a separate thread
+        processing_thread = threading.Thread(target=processing_worker)
+        processing_thread.daemon = True  # Thread will exit when main program exits
+        processing_thread.start()
+
+        # Schedule the UI update function to run periodically
+        Clock.schedule_interval(update_ui, 0.05)  # Update UI 20 times per second
 
     def start_parallel_processing(self):
         """Execute parallel processing on all inputs using multiprocessing"""
@@ -115,7 +137,7 @@ class MainScreen(MDScreen):
         progress_bar = self.ids.parallel_progress_bar
         time_indicator = self.ids.parallel_processing_button.parent.children[0]
 
-        # Get number of processes
+        # Get the number of processes
         try:
             num_processes = int(self.ids.num_processes_textfield.text)
             if num_processes <= 0:
@@ -211,6 +233,7 @@ class MainScreen(MDScreen):
 
         # Schedule the update function to run periodically
         Clock.schedule_interval(update_progress, 0.01)
+        print()
 
 
 class SingleProgressBar(MDBoxLayout):
