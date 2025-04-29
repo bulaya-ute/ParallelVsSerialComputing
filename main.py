@@ -168,22 +168,26 @@ class MainScreen(MDScreen):
         result_queues = [Queue() for _ in range(num_processes)]
 
         # Define worker function for each process
-        def worker_process(chunk_indices, result_queue):
-            start_idx, end_idx = chunk_indices
-            total_items = end_idx - start_idx
+        def worker_process(process_index, chunk_indices, result_queue):
+            _start_idx, _end_idx = chunk_indices
+            total_items = _end_idx - _start_idx
 
-            for i, idx in enumerate(range(start_idx, end_idx)):
+            for i, idx in enumerate(range(_start_idx, _end_idx)):
                 result = processor(inputs[idx])
                 # Report progress: (process_id, progress_percentage)
-                progress = (i + 1) / total_items
+                progress = ((i + 1) / total_items) * 100
                 result_queue.put(progress)
+                progress_bar.values[process_index] = progress
+
+            print(f"{process_index} Done processing chunk {_start_idx} to {_end_idx}")
+
 
         # Start processes
         processes = []
         start_time = time.time()
 
         for i in range(num_processes):
-            p = Process(target=worker_process, args=(chunks[i], result_queues[i]))
+            p = Process(target=worker_process, args=(i, chunks[i], result_queues[i]))
             processes.append(p)
             p.start()
 
@@ -196,6 +200,8 @@ class MainScreen(MDScreen):
             current_time = time.time()
             elapsed = current_time - start_time
             time_indicator.time_elapsed = elapsed
+
+            print(completed_processes)
 
             # Check each process queue for progress updates
             for i in range(num_processes):
