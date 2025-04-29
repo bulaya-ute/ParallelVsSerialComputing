@@ -134,6 +134,7 @@ class MainScreen(MDScreen):
     def start_parallel_processing(self):
         """Execute parallel processing on all inputs using multiprocessing"""
         from multiprocessing import Manager, Process
+        from kivy.clock import mainthread  # Import mainthread decorator
 
         # Get references to UI elements
         progress_bar = self.ids.parallel_progress_bar
@@ -204,7 +205,12 @@ class MainScreen(MDScreen):
             processes.append(p)
             p.start()
 
-        # Monitor process progress and update UI
+        # Define a mainthread function to update the progress bar
+        @mainthread
+        def update_progress_bar(values):
+            print(f"Progress bar values: {progress_bar.values}")
+            progress_bar.values = values
+
         def update_progress(dt):
             # Update elapsed time
             current_time = time.time()
@@ -224,7 +230,11 @@ class MainScreen(MDScreen):
 
                     progress_values.append(progress * 100)  # Convert to 0-100 scale for UI
 
-                # Update progress bar all at once to avoid visual artifacts
+                # Update progress bar using the mainthread decorator
+                update_progress_bar(progress_values)
+
+                # Debug print to verify progress values
+                print(f"Progress values: {progress_values}")
                 progress_bar.values = progress_values
 
                 # If all processes are complete
@@ -248,8 +258,8 @@ class MainScreen(MDScreen):
 
                     return False  # Stop the clock schedule
 
-            except (AttributeError, EOFError):
-                # Handle case where manager connection is lost
+            except (AttributeError, EOFError) as e:
+                print(f"Error updating progress: {e}")  # Add debug print
                 return False
 
             return True  # Continue the clock schedule
